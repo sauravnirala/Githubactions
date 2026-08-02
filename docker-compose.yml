@@ -1,0 +1,20 @@
+version: '3.9'
+
+services:
+
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: employee_db
+    ports:
+      - "3306:3306"
+
+  app:
+    build: .
+    container_name: employee-app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
