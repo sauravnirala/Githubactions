@@ -1,20 +1,45 @@
 from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 import os
+import pymysql
+
+# Required for SQLAlchemy to use PyMySQL
+pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = \
-    "mysql+pymysql://root:root@mysql/employee_db"
+# Database Configuration
+DB_USER = os.getenv("MYSQL_USER", "root")
+DB_PASSWORD = os.getenv("MYSQL_PASSWORD", "root")
+DB_HOST = os.getenv("MYSQL_HOST", "mysql")
+DB_NAME = os.getenv("MYSQL_DB", "employee_db")
+
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
+
+# Employee Table
+class Employee(db.Model):
+    __tablename__ = "employees"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    department = db.Column(db.String(100), nullable=False)
+    salary = db.Column(db.Integer, nullable=False)
+
+
+# Create table if it doesn't exist
+with app.app_context():
+    db.create_all()
+
+
 @app.route("/")
 def index():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM employees")
-    employees = cur.fetchall()
-    cur.close()
+    employees = Employee.query.all()
     return render_template("index.html", employees=employees)
 
 
@@ -23,19 +48,14 @@ def add():
 
     if request.method == "POST":
 
-        name = request.form["name"]
-        department = request.form["department"]
-        salary = request.form["salary"]
-
-        cur = mysql.connection.cursor()
-
-        cur.execute(
-            "INSERT INTO employees(name,department,salary) VALUES(%s,%s,%s)",
-            (name, department, salary),
+        employee = Employee(
+            name=request.form["name"],
+            department=request.form["department"],
+            salary=request.form["salary"]
         )
 
-        mysql.connection.commit()
-        cur.close()
+        db.session.add(employee)
+        db.session.commit()
 
         return redirect("/")
 
@@ -45,12 +65,7 @@ def add():
 @app.route("/edit/<int:id>")
 def edit(id):
 
-    cur = mysql.connection.cursor()
-
-    cur.execute("SELECT * FROM employees WHERE id=%s", (id,))
-    employee = cur.fetchone()
-
-    cur.close()
+    employee = Employee.query.get_or_404(id)
 
     return render_template("edit.html", employee=employee)
 
@@ -58,19 +73,13 @@ def edit(id):
 @app.route("/update/<int:id>", methods=["POST"])
 def update(id):
 
-    name = request.form["name"]
-    department = request.form["department"]
-    salary = request.form["salary"]
+    employee = Employee.query.get_or_404(id)
 
-    cur = mysql.connection.cursor()
+    employee.name = request.form["name"]
+    employee.department = request.form["department"]
+    employee.salary = request.form["salary"]
 
-    cur.execute(
-        "UPDATE employees SET name=%s,department=%s,salary=%s WHERE id=%s",
-        (name, department, salary, id),
-    )
-
-    mysql.connection.commit()
-    cur.close()
+    db.session.commit()
 
     return redirect("/")
 
@@ -78,12 +87,10 @@ def update(id):
 @app.route("/delete/<int:id>")
 def delete(id):
 
-    cur = mysql.connection.cursor()
+    employee = Employee.query.get_or_404(id)
 
-    cur.execute("DELETE FROM employees WHERE id=%s", (id,))
-
-    mysql.connection.commit()
-    cur.close()
+    db.session.delete(employee)
+    db.session.commit()
 
     return redirect("/")
 
