@@ -1,16 +1,13 @@
 from flask import Flask, render_template, request, redirect
-from flask_mysqldb import MySQL
+from flask_sqlalchemy import SQLAlchemy
 import os
 
 app = Flask(__name__)
 
-app.config["MYSQL_HOST"] = os.getenv("MYSQL_HOST", "mysql")
-app.config["MYSQL_USER"] = os.getenv("MYSQL_USER", "root")
-app.config["MYSQL_PASSWORD"] = os.getenv("MYSQL_PASSWORD", "root")
-app.config["MYSQL_DB"] = os.getenv("MYSQL_DB", "employee_db")
+app.config["SQLALCHEMY_DATABASE_URI"] = \
+    "mysql+pymysql://root:root@mysql/employee_db"
 
-mysql = MySQL(app)
-
+db = SQLAlchemy(app)
 
 @app.route("/")
 def index():
