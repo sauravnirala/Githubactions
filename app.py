@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 import os
 import pymysql
+import time
+from sqlalchemy.exc import OperationalError
 
 # Required for SQLAlchemy to use PyMySQL
 pymysql.install_as_MySQLdb()
@@ -34,7 +36,16 @@ class Employee(db.Model):
 
 # Create table if it doesn't exist
 with app.app_context():
-    db.create_all()
+    for i in range(10):
+        try:
+            db.create_all()
+            print("Database connected successfully!")
+            break
+        except OperationalError as e:
+            print(f"Waiting for MySQL... ({i+1}/10)")
+            time.sleep(5)
+    else:
+        raise Exception("Could not connect to MySQL after multiple attempts.")
 
 
 @app.route("/")
