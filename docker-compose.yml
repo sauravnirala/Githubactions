@@ -19,7 +19,7 @@ services:
 
   app:
 
-    image: YOUR_DOCKERHUB_USERNAME/employee-app:latest
+    image: saurav2402/employee-app:latest
 
     container_name: employee-app
 
