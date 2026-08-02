@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+<html>
+
+<body>
+
+<h2>Edit Employee</h2>
+
+<form action="/update/{{ employee[0] }}" method="POST">
+
+Name
+
+<input
+type="text"
+name="name"
+value="{{ employee[1] }}"
+>
+
+<br><br>
+
+Department
+
+<input
+type="text"
+name="department"
+value="{{ employee[2] }}"
+>
+
+<br><br>
+
+Salary
+
+<input
+type="number"
+name="salary"
+value="{{ employee[3] }}"
+>
+
+<br><br>
+
+<button type="submit">
+
+Update
+
+</button>
+
+</form>
+
+</body>
+
+</html>
