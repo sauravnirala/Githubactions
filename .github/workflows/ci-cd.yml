@@ -1,49 +1,46 @@
 name: Employee CI/CD
 
 on:
-
   push:
-
     branches:
       - main
 
 jobs:
-
   build:
 
     runs-on: ubuntu-latest
 
     steps:
 
-    - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-      with:
-        python-version: "3.12"
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
 
-    - run: |
-        pip install -r requirements.txt
+      - name: Run Tests
+        run: |
+          python -m unittest discover || true
 
-    - name: Run Tests
-      run: |
-        python -m unittest discover || true
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build Docker Image
-      run: |
-        docker build -t employee-app:${{ github.sha }} .
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/employee-app:${{ github.sha }} .
+          docker tag ${{ secrets.DOCKER_USERNAME }}/employee-app:${{ github.sha }} \
+                     ${{ secrets.DOCKER_USERNAME }}/employee-app:latest
 
-    - name: Login DockerHub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Tag Image
-      run: |
-        docker tag employee-app:${{ github.sha }} \
-        ${{ secrets.DOCKER_USERNAME }}/employee-app:latest
-
-    - name: Push Image
-      run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/employee-app:latest
+      - name: Push Image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/employee-app:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/employee-app:latest
